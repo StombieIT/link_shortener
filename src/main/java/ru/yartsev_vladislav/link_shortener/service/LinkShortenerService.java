@@ -1,0 +1,124 @@
+package ru.yartsev_vladislav.link_shortener.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import ru.yartsev_vladislav.link_shortener.config.LinkConfig;
+import ru.yartsev_vladislav.link_shortener.entity.Link;
+import ru.yartsev_vladislav.link_shortener.entity.User;
+import ru.yartsev_vladislav.link_shortener.exception.LinkDoesNotExistException;
+import ru.yartsev_vladislav.link_shortener.exception.LinkLimitExceededException;
+import ru.yartsev_vladislav.link_shortener.exception.NotExpiredLinkAlreadyExistsException;
+import ru.yartsev_vladislav.link_shortener.exception.LinkHasExpiredException;
+import ru.yartsev_vladislav.link_shortener.exception.UserDoesNotExistException;
+import ru.yartsev_vladislav.link_shortener.model.CreateLinkOptions;
+import ru.yartsev_vladislav.link_shortener.model.CreateLinkResult;
+import ru.yartsev_vladislav.link_shortener.repository.LinkRepository;
+import ru.yartsev_vladislav.link_shortener.repository.UserRepository;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+@Component
+public class LinkShortenerService {
+    private final UserRepository userRepository;
+    private final LinkRepository linkRepository;
+    private final UrlService urlService;
+    private final LinkConfig linkConfig;
+
+    @Autowired
+    public LinkShortenerService(
+        UserRepository userRepository,
+        LinkRepository linkRepository,
+        UrlService urlService,
+        LinkConfig linkConfig
+    ) {
+        this.userRepository = userRepository;
+        this.linkRepository = linkRepository;
+        this.urlService = urlService;
+        this.linkConfig = linkConfig;
+    }
+
+    public CreateLinkResult createLink(CreateLinkOptions options, String userId)
+            throws UserDoesNotExistException, NotExpiredLinkAlreadyExistsException {
+        User owner = ensureUser(userId);
+        String url = options.url;
+        Integer limit = options.limit;
+
+        urlService.validateUrl(url);
+        validateLimit(limit);
+
+        Optional<Link> notExpiredLink = linkRepository.findByFullUrlAndOwnerIdAndCreatedAtLessThan(
+            url,
+            owner.getId(),
+            LocalDateTime.now().minusSeconds(linkConfig.getTimeToLeave())
+        );
+        if (notExpiredLink.isPresent()) {
+            throw new NotExpiredLinkAlreadyExistsException(notExpiredLink.get());
+        }
+
+        String slug = urlService.generateLinkSlug(url);
+        Link link = new Link(slug, url, owner);
+        if (limit != null) {
+            link.setAttemptsLimit(limit);
+        }
+        link = linkRepository.save(link);
+        String shortUrl = urlService.generateShortUrl(link.getSlug());
+
+        return new CreateLinkResult(owner.getId(), shortUrl);
+    }
+
+    public String getFullLink(String slug)
+            throws LinkDoesNotExistException, LinkHasExpiredException, LinkLimitExceededException {
+        Optional<Link> optionalLink = linkRepository.findById(slug);
+        if (optionalLink.isEmpty()) {
+            throw new LinkDoesNotExistException(slug);
+        }
+        Link link = optionalLink.get();
+
+        validateLinkExpiration(link);
+        validateLinkLimitExceeding(link);
+
+        link.setAttempts(link.getAttempts() + 1);
+        linkRepository.save(link);
+
+        return link.getFullUrl();
+    }
+
+    protected User ensureUser(String userId) throws UserDoesNotExistException {
+        if (userId == null) {
+            User user = new User();
+            return userRepository.save(user);
+        }
+
+        Optional<User> user = userRepository.findById(userId);
+        if (user.isEmpty()) {
+            throw new UserDoesNotExistException(userId);
+        }
+
+        return user.get();
+    }
+
+    protected void validateLimit(Integer limit) {
+        if (limit != null && limit <= 0) {
+            throw new IllegalArgumentException("Limit should more than 0");
+        }
+    }
+
+    protected boolean isLinkExpired(Link link) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expirationTime = link.getCreatedAt().plusSeconds(linkConfig.getTimeToLeave());
+        return now.isAfter(expirationTime);
+    }
+
+    protected void validateLinkLimitExceeding(Link link) throws LinkLimitExceededException {
+        if (link.getAttemptsLimit() != null && link.getAttempts() >= link.getAttemptsLimit()) {
+            throw new LinkLimitExceededException(link);
+        }
+    }
+
+    private void validateLinkExpiration(Link link) throws LinkHasExpiredException {
+        if (isLinkExpired(link)) {
+            throw new LinkHasExpiredException(link);
+        }
+    }
+}
