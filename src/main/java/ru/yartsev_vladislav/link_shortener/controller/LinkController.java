@@ -12,7 +12,6 @@ import ru.yartsev_vladislav.link_shortener.exception.UserDoesNotExistException;
 import ru.yartsev_vladislav.link_shortener.exception.UserHasNotEnoughRightsException;
 import ru.yartsev_vladislav.link_shortener.exception.UserIsNotIdentifiedException;
 import ru.yartsev_vladislav.link_shortener.model.CreateLinkOptions;
-import ru.yartsev_vladislav.link_shortener.model.CreateLinkResult;
 import ru.yartsev_vladislav.link_shortener.model.EditLinkOptions;
 import ru.yartsev_vladislav.link_shortener.service.LinkShortenerService;
 
@@ -28,16 +27,21 @@ public class LinkController {
     }
 
     @PostMapping("/")
-    public ResponseEntity<CreateLinkResult> createLink(
+    public ResponseEntity<Object> createLink(
         @RequestBody CreateLinkOptions body,
         @RequestHeader(value = "X-User-Id", required = false) String userId
     ) {
         try {
             return ResponseEntity.ok(linkShortenerService.createLink(body, userId));
         } catch (UserDoesNotExistException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .build();
         } catch (NotExpiredLinkAlreadyExistsException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -98,6 +102,9 @@ public class LinkController {
                     .body(Map.of("error", e.getMessage()));
         } catch (UserIsNotIdentifiedException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage()));
         }
     }

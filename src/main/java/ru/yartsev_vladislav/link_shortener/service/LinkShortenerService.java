@@ -62,7 +62,7 @@ public class LinkShortenerService {
             throw new NotExpiredLinkAlreadyExistsException(notExpiredLink.get());
         }
 
-        String slug = urlService.generateLinkSlug(url);
+        String slug = urlService.generateLinkSlug(url, owner.getId());
         Link link = new Link(slug, url, owner);
         if (limit != null) {
             link.setAttemptsLimit(limit);
@@ -103,6 +103,7 @@ public class LinkShortenerService {
         Link link = ensureLinkWithOwner(slug, ownerId);
 
         validateLinkExpiration(link);
+        validateLimit(options.attemptsLimit);
 
         link.setAttemptsLimit(options.attemptsLimit);
         linkRepository.save(link);
