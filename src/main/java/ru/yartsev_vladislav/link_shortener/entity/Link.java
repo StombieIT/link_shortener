@@ -90,6 +90,10 @@ public class Link {
         return createdAt;
     }
 
+    public void setCreatedAt(@Nonnull LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
     public User getOwner() {
         return owner;
     }

@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 @Component
 public class UrlService {
     private static final String BASE62_ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    private static final int SLUG_LENGTH = 8;
+    private static final int SLUG_MIN_LENGTH = 8;
 
     private static long getHash(String a, String b) {
         long hash = 0;
@@ -54,7 +54,7 @@ public class UrlService {
 
     public String generateLinkSlug(String url, String salt) {
         long hash = getHash(url, salt);
-        return encodeBase62(hash, SLUG_LENGTH);
+        return encodeBase62(hash, SLUG_MIN_LENGTH);
     }
 
     public String generateShortUrl(String slug) {
