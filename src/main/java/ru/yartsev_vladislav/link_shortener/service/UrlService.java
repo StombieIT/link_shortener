@@ -14,7 +14,6 @@ public class UrlService {
 
     private static long getHash(String a, String b) {
         long hash = 0;
-
         // Полиномиальный хеш для первой строки
         for (char c : a.toCharArray()) {
             hash = hash * 31 + c;
@@ -33,6 +32,7 @@ public class UrlService {
         return hash & 0x7FFFFFFFFFFFFFFFL;
     }
 
+    // Кодирование хэша в base62-формат
     private static String encodeBase62(long value, int length) {
         StringBuilder sb = new StringBuilder();
         while (value > 0) {

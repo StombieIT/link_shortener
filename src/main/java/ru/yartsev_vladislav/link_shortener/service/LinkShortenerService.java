@@ -21,7 +21,6 @@ import ru.yartsev_vladislav.link_shortener.repository.LinkRepository;
 import ru.yartsev_vladislav.link_shortener.repository.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -53,7 +52,7 @@ public class LinkShortenerService {
         urlService.validateUrl(url);
         validateLimit(limit);
 
-        Optional<Link> notExpiredLink = linkRepository.findByFullUrlAndOwnerIdAndCreatedAtLessThan(
+        Optional<Link> notExpiredLink = linkRepository.findByFullUrlAndOwnerIdAndCreatedAtGreaterThanEqual(
             url,
             owner.getId(),
             LocalDateTime.now().minusSeconds(linkConfig.getTimeToLeave())
@@ -63,6 +62,12 @@ public class LinkShortenerService {
         }
 
         String slug = urlService.generateLinkSlug(url, owner.getId());
+
+        Optional<Link> linkFromDb = linkRepository.findById(slug);
+        if (linkFromDb.isPresent() && isLinkExpired(linkFromDb.get())) {
+            linkRepository.delete(linkFromDb.get());
+        }
+
         Link link = new Link(slug, url, owner);
         if (limit != null) {
             link.setAttemptsLimit(limit);
@@ -103,9 +108,9 @@ public class LinkShortenerService {
         Link link = ensureLinkWithOwner(slug, ownerId);
 
         validateLinkExpiration(link);
-        validateLimit(options.attemptsLimit);
+        validateLimit(options.limit);
 
-        link.setAttemptsLimit(options.attemptsLimit);
+        link.setAttemptsLimit(options.limit);
         linkRepository.save(link);
     }
 
