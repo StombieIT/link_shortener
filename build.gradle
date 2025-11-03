@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.7'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'com.diffplug.spotless' version '6.21.0'
 }
 
 group = 'ru.yartsev_vladislav'
@@ -14,8 +15,22 @@ java {
 	}
 }
 
+spotless {
+	java {
+		target 'src/**/*.java'       // какие файлы проверять
+		googleJavaFormat('1.17.0')   // стиль кода (Google Java Style)
+	}
+
+	format 'misc', {
+		target '**/*.gradle', '**/*.md', '**/*.yml'
+		trimTrailingWhitespace()
+		endWithNewline()
+	}
+}
+
 repositories {
 	mavenCentral()
+	google()
 }
 
 dependencies {

@@ -28,7 +28,7 @@ POSTGRES_HOST=localhost
 # Настройки приложения
 PORT=8080                         # Порт, на котором будет запущен HTTP-сервер
 URL_HOSTNAME=localhost:8080       # Хостнейм, которые будет использован для генерации ссылки
-URL_SCHEME=http                   # Схема, которая будет использоваться при генерации (http/https) 
+URL_SCHEME=http                   # Схема, которая будет использоваться при генерации (http/https)
 LINK_TTL=86400                    # Время жизни ссылки в секундах (по умолчанию 24 часа)
 SCHEDULER_LINK_DELAY_MS=86400000  # Период запуска очистки ссылок в мс (по умолчанию 24 часа)
 ```
@@ -159,5 +159,3 @@ curl -X DELETE http://localhost:8080/3UmIUftimB9 \
   "result": "Link '3UmIUftimB9' has been deleted"
 }
 ```
-
-

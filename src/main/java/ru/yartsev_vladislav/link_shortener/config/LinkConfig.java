@@ -6,14 +6,14 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "link")
 public class LinkConfig {
-    // Выражается в секундах
-    private long timeToLeave;
+  // Выражается в секундах
+  private long timeToLeave;
 
-    public long getTimeToLeave() {
-        return timeToLeave;
-    }
+  public long getTimeToLeave() {
+    return timeToLeave;
+  }
 
-    public void setTimeToLeave(long timeToLeave) {
-        this.timeToLeave = timeToLeave;
-    }
+  public void setTimeToLeave(long timeToLeave) {
+    this.timeToLeave = timeToLeave;
+  }
 }
