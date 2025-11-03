@@ -159,3 +159,13 @@ curl -X DELETE http://localhost:8080/3UmIUftimB9 \
   "result": "Link '3UmIUftimB9' has been deleted"
 }
 ```
+
+### Тестирование
+
+Приложение содержит интеграционные и модульные, которые представлены по пути
+`src/test/java/ru/yartsev_vladislav/link_shortener`
+Чтобы запустить тестирование и проверить корректность работы текущей
+версии проекта, достаточно запустить команду:
+```bash
+./gradlew test
+```
